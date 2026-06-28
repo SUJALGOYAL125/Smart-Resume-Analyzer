@@ -2,7 +2,7 @@
 
 > AI-powered resume analyzer that extracts skills, scores ATS compatibility and predicts job roles from PDF resumes using NLP
 
-🌐 **Live Demo:** [Click here](your-streamlit-link)
+🌐 **Live Demo:** [Click here]([your-streamlit-link](https://sujalgoyal125-smart-resume-analyzer-app-dnxtfb.streamlit.app/))
 📁 **GitHub:** [Repository](https://github.com/SUJALGOYAL125/Smart-Resume-Analyzer)
 
 ---
