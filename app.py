@@ -10,6 +10,7 @@ import os
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 from collections import Counter
+from sentence_transformers import SentenceTransformer, util
 
 # ============ DOWNLOAD NLTK DATA ============
 nltk.download('stopwords')
@@ -209,15 +210,40 @@ if uploaded_file and resume_text:
 
 
 # ============ EXTRACT SKILLS ============
-def extract_skills(text):
-    text_lower = text.lower()
-    found_skills = []
+@st.cache_resource
+def load_embedding_model():
+    return SentenceTransformer('all-MiniLM-L6-v2')  # small, fast, free, local
 
+embedding_model = load_embedding_model()
+
+def extract_skills(text, similarity_threshold=0.6):
+    text_lower = text.lower()
+    found_skills = set()
+
+    # Pass 1: exact substring match (fast, catches the common case)
+    remaining_skills = []
     for skill in SKILLS_LIST:
         if skill in text_lower:
-            found_skills.append(skill.upper())
+            found_skills.add(skill.upper())
+        else:
+            remaining_skills.append(skill)
 
-    return list(set(found_skills))
+    # Pass 2: embedding-based semantic match for skills not found exactly
+    # Split resume into rough phrases (lines/sentences) to compare against
+    text_chunks = [line.strip() for line in text.split('\n') if len(line.strip()) > 3]
+
+    if remaining_skills and text_chunks:
+        skill_embeddings = embedding_model.encode(remaining_skills, convert_to_tensor=True)
+        chunk_embeddings = embedding_model.encode(text_chunks, convert_to_tensor=True)
+
+        similarity_matrix = util.cos_sim(skill_embeddings, chunk_embeddings)
+
+        for i, skill in enumerate(remaining_skills):
+            max_similarity = similarity_matrix[i].max().item()
+            if max_similarity >= similarity_threshold:
+                found_skills.add(skill.upper())
+
+    return list(found_skills)
 
 
 
